@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { UserDocument } from './users/models/user.schema';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from './interfaces/token-payload.interfaces';
+import { UserDocument } from '@app/common';
 
 @Injectable()
 export class AuthService {
@@ -21,8 +21,14 @@ export class AuthService {
     expires.setSeconds(
       expires.getSeconds() + this.configService.get('JWT_EXPIRATION'),
     );
-
-    const token = await this.jwtService.sign(tokenPayload);
+    console.log('🚀 ~ AuthService ~ login ~ expires:', expires);
+    let token;
+    console.log('🚀 ~ AuthService ~ login ~ tokenPayload:', tokenPayload);
+    try {
+      token = await this.jwtService.sign(tokenPayload);
+    } catch (e) {
+      console.log('🚀 ~ AuthService ~ login ~ token:', token, e);
+    }
 
     response.cookie('Authentication', token, {
       httpOnly: true,
