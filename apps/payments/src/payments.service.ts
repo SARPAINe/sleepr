@@ -1,8 +1,8 @@
+import { CreateChargeDto } from '@app/common';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ClientGrpcProxy } from '@nestjs/microservices';
 import Stripe from 'stripe';
-import { CreateChargeDto } from './dto/create-charge.dto';
-
 @Injectable()
 export class PaymentsService {
   private readonly stripe: Stripe;
@@ -16,19 +16,28 @@ export class PaymentsService {
   }
 
   async createCharge({ card, amount }: CreateChargeDto) {
-    const paymentMethod = await this.stripe.paymentMethods.create({
-      type: 'card',
-      card,
-    });
+    // stripe doesnt allow to use raw card details
+    // const paymentMethod = await this.stripe.paymentMethods.create({
+    //   type: 'card',
+    //   card,
+    // });
 
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      payment_method: paymentMethod.id,
-      amount: amount * 100,
-      currency: 'usd',
-      confirm: true,
-      payment_method_types: ['card'],
-    });
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        payment_method: 'pm_card_visa',
+        amount: amount * 100,
+        currency: 'usd',
+        confirm: true,
+        automatic_payment_methods: {
+          enabled: true,
+          allow_redirects: 'never',
+        },
+        // payment_method_types: ['card'],
+      });
 
-    return paymentIntent;
+      return paymentIntent;
+    } catch (e) {
+      console.log('🚀 ~ PaymentsService ~ createCharge ~ e:', e);
+    }
   }
 }
