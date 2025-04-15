@@ -20,9 +20,15 @@ export class UsersService {
     if (!email || !password) {
       throw new UnauthorizedException('Email and password are required');
     }
-    const existingUser = await this.userRepository.findOne({ email });
-    if (existingUser) {
-      throw new UnauthorizedException('Email already exists');
+    try {
+      const existingUser = await this.userRepository.findOne({ email });
+      if (existingUser) {
+        throw new UnauthorizedException('Email already exists');
+      }
+    } catch (e) {
+      if (e.name !== 'NotFoundException') {
+        throw e;
+      }
     }
   }
 
