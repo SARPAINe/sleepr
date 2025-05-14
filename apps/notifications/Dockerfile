@@ -6,10 +6,11 @@ COPY package*.json ./
 COPY package-lock*.json ./
 COPY tsconfig*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY apps/notifications apps/notifications
 COPY libs libs
+RUN cd apps/notifications && npm install 
 
 RUN npm run build
 
