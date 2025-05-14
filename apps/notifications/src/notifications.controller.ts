@@ -10,6 +10,10 @@ export class NotificationsController {
   @UsePipes(new ValidationPipe())
   @EventPattern('notify_email')
   async notifyEmail(@Payload() data: NotifyEmailDto) {
+    console.log(
+      '🚀 ~ NotificationsController ~ notifyEmail ~ NotifyEmailDto:',
+      data,
+    );
     await this.notificationsService.notifyEmail(data);
   }
 }
