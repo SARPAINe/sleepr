@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY package-lock*.json ./
 COPY tsconfig*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY apps/auth apps/auth
 COPY libs libs
