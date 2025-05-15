@@ -2,6 +2,7 @@ import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import {
   Ctx,
+  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
@@ -12,18 +13,22 @@ import { PaymentsCreateChargeDto } from './dto/payments-create-charge.dto';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @MessagePattern('create_charge')
+  @EventPattern('create_charge')
   @UsePipes(new ValidationPipe())
   async createCharge(
     @Payload() data: PaymentsCreateChargeDto,
     @Ctx() context: RmqContext,
   ) {
-    // const channel = context.getChannelRef();
-    // console.log('🚀 ~ PaymentsController ~ channel:', channel);
-    // const originalMessage = context.getMessage();
-    // console.log('🚀 ~ PaymentsController ~ originalMessage:', originalMessage);
-    // channel.ack(originalMessage);
-    // throw new Error('Not implemented');
-    return this.paymentsService.createCharge(data);
+    const channel = context.getChannelRef();
+    const originalMessage = context.getMessage();
+
+    try {
+      const result = await this.paymentsService.createCharge(data);
+      channel.ack(originalMessage); // Acknowledge the message
+      return result;
+    } catch (error) {
+      console.error('Error processing message:', error.message);
+      channel.nack(originalMessage, false, true); // Requeue the message for retry
+    }
   }
 }

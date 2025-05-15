@@ -1,10 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationsRepository } from './reservations.repository';
 import { PAYMENTS_SERVICE, UserDto } from '@app/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { map } from 'rxjs';
+import { ClientProxy, RmqStatus } from '@nestjs/microservices';
+import { catchError, map, timeout } from 'rxjs';
 
 @Injectable()
 export class ReservationsService {
@@ -23,6 +28,13 @@ export class ReservationsService {
         email,
       })
       .pipe(
+        timeout(5000),
+        catchError((err) => {
+          console.error('Error creating charge:', err);
+          throw new ServiceUnavailableException(
+            'Payments service is unavailable',
+          );
+        }),
         map((res) => {
           return this.reservationsRepository.create({
             ...createReservationDto,
